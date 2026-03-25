@@ -1,25 +1,19 @@
 export const theme = {
   colors: {
-    primary: '#2ECC71',      // Emerald Green
-    secondary: '#27AE60',    // Darker Green
-    background: '#FFFFFF',   // Pure White
-    surface: '#F8F9F9',      // Light Gray background
-    text: '#2C3E50',         // Dark Navy Text
-    textSecondary: '#7F8C8D', // Gray Text
-    error: '#E74C3C',        // Red
-    success: '#2ECC71',
-    border: '#EAEDED'
+    primary: '#15803d',      // Deep Forest Green (Darker & Richer)
+    primaryLight: '#22c55e', // Vibrant Green for accents
+    secondary: '#064e3b',    // Ultra Dark Green
+    background: '#f8fafc',   // Soft Slate Background (not pure white)
+    surface: '#ffffff',      // Card Background
+    text: '#0f172a',         // Deep Slate Text (almost black)
+    textSecondary: '#64748b',// Muted Slate
+    error: '#dc2626',        // Professional Red
+    success: '#16a34a',
+    border: '#e2e8f0',
+    white: '#ffffff',
   },
-  spacing: {
-    xs: '4px',
-    s: '8px',
-    m: '16px',
-    l: '24px',
-    xl: '32px'
-  },
-  borderRadius: {
-    s: '4px',
-    m: '8px',
-    l: '15px'
+  shadows: {
+    soft: '0px 4px 12px rgba(0, 0, 0, 0.05)',
+    medium: '0px 8px 24px rgba(0, 0, 0, 0.1)',
   }
 };
