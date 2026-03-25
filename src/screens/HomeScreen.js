@@ -8,7 +8,7 @@ import { AuthContext } from '../context/AuthContext';
 import apiClient from '../api/client';
 import { 
   Bell, Trash2, ArrowRight, User as UserIcon, 
-  AlertTriangle, Map, Clock, MessageSquare, CheckCircle 
+  AlertTriangle, Map, Clock, MessageCircle, CheckCircle 
 } from 'lucide-react-native';
 
 const HomeScreen = ({ navigation }) => {
@@ -57,20 +57,11 @@ const HomeScreen = ({ navigation }) => {
         </TopRow>
 
         <StatsContainer>
-          <StatBox>
-            <StatNum>{stats.summary.total}</StatNum>
-            <StatLabel>Pickups</StatLabel>
-          </StatBox>
+          <StatBox><StatNum>{stats.summary.total}</StatNum><StatLabel>Pickups</StatLabel></StatBox>
           <Divider />
-          <StatBox>
-            <StatNum>{isCollector ? '98%' : '4.9'}</StatNum>
-            <StatLabel>{isCollector ? 'Efficiency' : 'Rating'}</StatLabel>
-          </StatBox>
+          <StatBox><StatNum>{isCollector ? '98%' : '4.9'}</StatNum><StatLabel>Efficiency</StatLabel></StatBox>
           <Divider />
-          <StatBox>
-            <StatNum>{stats.wasteTypeStats.length}</StatNum>
-            <StatLabel>Categories</StatLabel>
-          </StatBox>
+          <StatBox><StatNum>{stats.wasteTypeStats.length}</StatNum><StatLabel>Categories</StatLabel></StatBox>
         </StatsContainer>
       </HeaderWrapper>
 
@@ -84,21 +75,11 @@ const HomeScreen = ({ navigation }) => {
                 <IconCircle><Map color="#1e293b" size={24} /></IconCircle>
                 <View style={{ flex: 1, marginLeft: 15 }}>
                   <ActionTitle>Live Mission Map</ActionTitle>
-                  <ActionSub>Navigate to collection pins</ActionSub>
+                  <ActionSub>Navigate to assigned pins</ActionSub>
                 </View>
                 <ArrowRight color="#fff" size={20} />
               </LinearGradient>
             </PrimaryActionCard>
-            <SecondaryActionCard activeOpacity={0.8} onPress={() => navigation.navigate('NewReport')}>
-              <LinearGradient colors={['#991b1b', '#7f1d1d']} style={CardStyle}>
-                <IconCircle><AlertTriangle color="#991b1b" size={24} /></IconCircle>
-                <View style={{ flex: 1, marginLeft: 15 }}>
-                  <ActionTitle>Report Incident</ActionTitle>
-                  <ActionSub>Illegal dumping or blocks</ActionSub>
-                </View>
-                <ArrowRight color="#fff" size={20} />
-              </LinearGradient>
-            </SecondaryActionCard>
           </View>
         ) : (
           <View>
@@ -112,19 +93,27 @@ const HomeScreen = ({ navigation }) => {
                 <ArrowRight color="#fff" size={20} />
               </LinearGradient>
             </PrimaryActionCard>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-                <SmallCard onPress={() => navigation.navigate('Requests')}><Clock color="#15803d" size={20} /><SmallLabel>History</SmallLabel></SmallCard>
-                <SmallCard onPress={() => navigation.navigate('Reports')}><MessageSquare color="#15803d" size={20} /><SmallLabel>Reports</SmallLabel></SmallCard>
-            </View>
           </View>
         )}
 
-        <SectionHeader style={{ marginTop: 25 }}><SectionTitle>Recent Activity</SectionTitle></SectionHeader>
+        {/* --- FIXED NAVIGATION: POINTS TO ChatList --- */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+            <SmallCard onPress={() => navigation.navigate('ChatList')}>
+                <MessageCircle color="#15803d" size={20} />
+                <SmallLabel>Chat Inbox</SmallLabel>
+            </SmallCard>
+            <SmallCard onPress={() => navigation.navigate('Requests')}>
+                <Clock color="#15803d" size={20} />
+                <SmallLabel>My History</SmallLabel>
+            </SmallCard>
+        </View>
+
+        <SectionHeader><SectionTitle>System Status</SectionTitle></SectionHeader>
         <ActivityCard>
           <StatusIndicator color="#15803d" />
           <ActivityInfo>
             <ActivityTitle>Cloud Sync Active</ActivityTitle>
-            <ActivityDate>Last updated: Just now</ActivityDate>
+            <ActivityDate>Real-time data flow is healthy</ActivityDate>
           </ActivityInfo>
           <CheckCircle color="#15803d" size={20} />
         </ActivityCard>
@@ -133,8 +122,8 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
+// --- STYLED COMPONENTS ---
 const CardStyle = { padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center' };
-const Centered = styled.View` flex: 1; justify-content: center; align-items: center; background: #fff; `;
 const Container = styled.View` flex: 1; background-color: #f8fafc; `;
 const HeaderWrapper = styled(LinearGradient)` padding: 60px 20px 45px; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; `;
 const TopRow = styled.View` flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 30px; `;
@@ -143,7 +132,7 @@ const AvatarWrapper = styled.View` width: 40px; height: 40px; border-radius: 20p
 const WelcomeText = styled.Text` color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 500; `;
 const UserName = styled.Text` color: #fff; font-size: 20px; font-weight: bold; `;
 const IconButton = styled.TouchableOpacity` background: rgba(255,255,255,0.15); padding: 10px; border-radius: 12px; `;
-const RedDot = styled.View` position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 5px; background-color: #ef4444; border: 2px solid #15803d; `;
+const RedDot = styled.View` position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 5px; background-color: #ef4444; border: 2px solid #15803d; `;
 const StatsContainer = styled.View` flex-direction: row; background: #fff; border-radius: 20px; padding: 20px; justify-content: space-around; elevation: 10; shadow-opacity: 0.1; shadow-radius: 10px; `;
 const StatBox = styled.View` align-items: center; `;
 const StatNum = styled.Text` font-size: 18px; font-weight: bold; color: #0f172a; `;
@@ -153,12 +142,12 @@ const Content = styled.ScrollView` flex: 1; padding: 25px 20px; `;
 const SectionHeader = styled.View` margin-bottom: 15px; `;
 const SectionTitle = styled.Text` font-size: 18px; font-weight: 800; color: #0f172a; `;
 const PrimaryActionCard = styled.TouchableOpacity` margin-bottom: 15px; `;
-const SecondaryActionCard = styled.TouchableOpacity` margin-bottom: 15px; `;
 const SmallCard = styled.TouchableOpacity` flex: 1; background: #fff; padding: 15px; border-radius: 15px; border: 1px solid #e2e8f0; flex-direction: row; align-items: center; justify-content: center; gap: 8px; `;
 const SmallLabel = styled.Text` font-weight: 700; color: #1e293b; font-size: 12px; `;
 const IconCircle = styled.View` width: 48px; height: 48px; border-radius: 24px; background: #fff; justify-content: center; align-items: center; `;
 const ActionTitle = styled.Text` color: #fff; font-size: 17px; font-weight: 700; `;
 const ActionSub = styled.Text` color: rgba(255,255,255,0.8); font-size: 12px; `;
+const Centered = styled.View` flex: 1; justify-content: center; align-items: center; background: #fff; `;
 const ActivityCard = styled.View` background: #fff; border-radius: 16px; padding: 16px; flex-direction: row; align-items: center; margin-bottom: 12px; border: 1px solid #f1f5f9; `;
 const StatusIndicator = styled.View` width: 4px; height: 35px; border-radius: 2px; background: #15803d; margin-right: 15px; `;
 const ActivityInfo = styled.View` flex: 1; `;

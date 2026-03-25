@@ -12,39 +12,41 @@ import { AuthProvider, AuthContext } from './src/context/AuthContext';
 // Navigation Hub (Bottom Tabs)
 import TabNavigator from './src/navigation/TabNavigator';
 
-// Auth Stack Screens
+// --- SCREENS ---
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-
-// App Stack Screens (Full Screen)
 import RequestDetailScreen from './src/screens/RequestDetailScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
 
-// Modal Screens (Slide up from bottom)
+// COMMUNICATION SCREENS
+import ChatListScreen from './src/screens/ChatListScreen';
+import ChatRoomScreen from './src/screens/ChatRoomScreen';
+
+// MODALS
 import NewRequestScreen from './src/screens/NewRequestScreen';
 import NewReportScreen from './src/screens/NewReportScreen';
 
 const Stack = createStackNavigator();
 
-/**
- * RootNavigator: Switches between Auth and App based on token
- */
 const RootNavigator = () => {
   const { token, isLoading } = useContext(AuthContext);
 
-  if (isLoading) return null; // Or a Splash Screen component
+  if (isLoading) return null; 
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {token ? (
-        // --- AUTHENTICATED APP STACK ---
         <>
-          {/* Main Tab Navigation */}
+          {/* Main App */}
           <Stack.Screen name="Main" component={TabNavigator} />
           
-          {/* Feature Screens */}
+          {/* Operational Screens */}
           <Stack.Screen name="RequestDetail" component={RequestDetailScreen} />
           <Stack.Screen name="Notifications" component={NotificationScreen} />
+          
+          {/* CHAT SYSTEM (Synchronized Names) */}
+          <Stack.Screen name="ChatList" component={ChatListScreen} />
+          <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
 
           {/* Form Modals */}
           <Stack.Group screenOptions={{ presentation: 'modal' }}>
@@ -53,7 +55,6 @@ const RootNavigator = () => {
           </Stack.Group>
         </>
       ) : (
-        // --- UNAUTHENTICATED AUTH STACK ---
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
@@ -69,7 +70,7 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <AuthProvider>
           <NavigationContainer>
-            <StatusBar style="auto" />
+            <StatusBar style="auto" /> 
             <RootNavigator />
           </NavigationContainer>
         </AuthProvider>
