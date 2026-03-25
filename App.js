@@ -2,18 +2,22 @@ import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ThemeProvider } from 'styled-components/native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Global Context & Theme
 import { theme } from './src/theme/theme';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
-import TabNavigator from './src/navigation/TabNavigator'; 
 
-// Screens
+// Navigation & Screens
+import TabNavigator from './src/navigation/TabNavigator';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-import { View, Text, Button } from 'react-native';
+import NewRequestScreen from './src/screens/NewRequestScreen';
+import RequestDetailScreen from './src/screens/RequestDetailScreen';
 
 const Stack = createStackNavigator();
 
-// Temporary Dashboard Screen
 const RootNavigator = () => {
   const { token, isLoading } = useContext(AuthContext);
 
@@ -22,8 +26,22 @@ const RootNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {token ? (
-        // When logged in, show the TabNavigator
-        <Stack.Screen name="Main" component={TabNavigator} />
+        <>
+          {/* Main App with Tabs */}
+          <Stack.Screen name="Main" component={TabNavigator} />
+          
+          {/* Functional Modals */}
+          <Stack.Screen 
+            name="NewRequest" 
+            component={NewRequestScreen} 
+            options={{ presentation: 'modal' }} 
+          />
+          <Stack.Screen 
+            name="RequestDetail" 
+            component={RequestDetailScreen} 
+            options={{ presentation: 'card' }} 
+          />
+        </>
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -36,12 +54,15 @@ const RootNavigator = () => {
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-      </AuthProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider theme={theme}>
+        <AuthProvider>
+          <NavigationContainer>
+            <StatusBar style="auto" />
+            <RootNavigator />
+          </NavigationContainer>
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

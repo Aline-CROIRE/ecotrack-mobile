@@ -1,8 +1,6 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { AuthContext } from '../context/AuthContext';
-import { theme } from '../theme/theme';
+import { Ionicons } from '@expo/vector-icons'; // Ensure this is exactly like this
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -13,39 +11,50 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
-  const { user } = useContext(AuthContext);
-
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-        },
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Requests') iconName = focused ? 'list' : 'list-outline';
-          else if (route.name === 'Reports') iconName = focused ? 'warning' : 'warning-outline';
-          else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+        tabBarActiveTintColor: '#15803d', // Vibrant Forest Green
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: { 
+          height: 70, 
+          paddingBottom: 15, 
+          paddingTop: 10,
+          backgroundColor: '#ffffff', // Ensure white background
+          borderTopWidth: 1,
+          borderTopColor: '#f1f5f9'
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />
+        }}
+      />
       <Tab.Screen 
         name="Requests" 
         component={RequestsScreen} 
-        options={{ title: user?.role === 'collector' ? 'Tasks' : 'My Pickups' }}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />
+        }}
       />
-      <Tab.Screen name="Reports" component={ReportsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen 
+        name="Reports" 
+        component={ReportsScreen} 
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="warning" size={size} color={color} />
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />
+        }}
+      />
     </Tab.Navigator>
   );
 };
