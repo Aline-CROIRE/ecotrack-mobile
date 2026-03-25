@@ -2,29 +2,58 @@ import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ThemeProvider } from 'styled-components/native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Global Context & Theme
 import { theme } from './src/theme/theme';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
-import TabNavigator from './src/navigation/TabNavigator'; 
 
-// Screens
+// Navigation Hub (Bottom Tabs)
+import TabNavigator from './src/navigation/TabNavigator';
+
+// Auth Stack Screens
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-import { View, Text, Button } from 'react-native';
+
+// App Stack Screens (Full Screen)
+import RequestDetailScreen from './src/screens/RequestDetailScreen';
+import NotificationScreen from './src/screens/NotificationScreen';
+
+// Modal Screens (Slide up from bottom)
+import NewRequestScreen from './src/screens/NewRequestScreen';
+import NewReportScreen from './src/screens/NewReportScreen';
 
 const Stack = createStackNavigator();
 
-// Temporary Dashboard Screen
+/**
+ * RootNavigator: Switches between Auth and App based on token
+ */
 const RootNavigator = () => {
   const { token, isLoading } = useContext(AuthContext);
 
-  if (isLoading) return null;
+  if (isLoading) return null; // Or a Splash Screen component
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {token ? (
-        // When logged in, show the TabNavigator
-        <Stack.Screen name="Main" component={TabNavigator} />
+        // --- AUTHENTICATED APP STACK ---
+        <>
+          {/* Main Tab Navigation */}
+          <Stack.Screen name="Main" component={TabNavigator} />
+          
+          {/* Feature Screens */}
+          <Stack.Screen name="RequestDetail" component={RequestDetailScreen} />
+          <Stack.Screen name="Notifications" component={NotificationScreen} />
+
+          {/* Form Modals */}
+          <Stack.Group screenOptions={{ presentation: 'modal' }}>
+            <Stack.Screen name="NewRequest" component={NewRequestScreen} />
+            <Stack.Screen name="NewReport" component={NewReportScreen} />
+          </Stack.Group>
+        </>
       ) : (
+        // --- UNAUTHENTICATED AUTH STACK ---
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
@@ -36,12 +65,15 @@ const RootNavigator = () => {
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-      </AuthProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider theme={theme}>
+        <AuthProvider>
+          <NavigationContainer>
+            <StatusBar style="auto" />
+            <RootNavigator />
+          </NavigationContainer>
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

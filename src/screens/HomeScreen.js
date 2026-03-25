@@ -1,103 +1,133 @@
 import React, { useContext } from 'react';
-import { ScrollView, StatusBar, View } from 'react-native';
+import { ScrollView, StatusBar, View, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuthContext } from '../context/AuthContext';
-import { Bell, Trash2, ArrowRight, User as UserIcon } from 'lucide-react-native';
+import { Bell, Trash2, ArrowRight, User as UserIcon, AlertTriangle, Map, Clock, MessageSquare } from 'lucide-react-native';
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
+  const isCollector = user?.role === 'collector';
 
   return (
     <Container>
       <StatusBar barStyle="light-content" />
       
+      {/* 1. PREMIUM HEADER GRADIENT */}
       <HeaderWrapper
-        colors={['#064e3b', '#15803d']} // Deep Dark to Forest Green
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={['#064e3b', '#15803d']}
+        start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
       >
         <TopRow>
           <UserSection>
-            <AvatarWrapper>
-              <UserIcon color="#fff" size={20} />
-            </AvatarWrapper>
+            <AvatarWrapper><UserIcon color="#fff" size={20} /></AvatarWrapper>
             <View>
-              <WelcomeText>EcoTrack Member</WelcomeText>
+              <WelcomeText>{isCollector ? 'Collector Staff' : 'EcoTrack Member'}</WelcomeText>
               <UserName>{user?.name || 'User'}</UserName>
             </View>
           </UserSection>
-          <IconButton>
+          <IconButton onPress={() => navigation.navigate('Notifications')}>
             <Bell color="#fff" size={22} />
           </IconButton>
         </TopRow>
 
+        {/* 2. DYNAMIC STATS */}
         <StatsContainer>
           <StatBox>
-            <StatNum>14</StatNum>
-            <StatLabel>Pickups</StatLabel>
+            <StatNum>{isCollector ? '24' : '14'}</StatNum>
+            <StatLabel>{isCollector ? 'Completed' : 'Pickups'}</StatLabel>
           </StatBox>
           <Divider />
           <StatBox>
-            <StatNum>4.9</StatNum>
-            <StatLabel>Rating</StatLabel>
+            <StatNum>{isCollector ? '98%' : '4.9'}</StatNum>
+            <StatLabel>{isCollector ? 'Efficiency' : 'Rating'}</StatLabel>
           </StatBox>
           <Divider />
           <StatBox>
-            <StatNum>12kg</StatNum>
-            <StatLabel>Recycled</StatLabel>
+            <StatNum>{isCollector ? '8' : '12kg'}</StatNum>
+            <StatLabel>{isCollector ? 'Assigned' : 'Recycled'}</StatLabel>
           </StatBox>
         </StatsContainer>
       </HeaderWrapper>
 
       <Content showsVerticalScrollIndicator={false}>
         <SectionHeader>
-          <SectionTitle>Quick Actions</SectionTitle>
+          <SectionTitle>Primary Operations</SectionTitle>
         </SectionHeader>
 
-        <PrimaryActionCard activeOpacity={0.9}>
-          <LinearGradient
-            colors={['#15803d', '#166534']}
-            style={{ padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center' }}
-          >
-            <IconCircle>
-              <Trash2 color="#15803d" size={24} />
-            </IconCircle>
-            <View style={{ flex: 1, marginLeft: 15 }}>
-              <ActionTitle>Request Waste Pickup</ActionTitle>
-              <ActionSub>Instant scheduled collection</ActionSub>
+        {/* 3. DYNAMIC ACTIONS BASED ON ROLE */}
+        {isCollector ? (
+          <View>
+            <PrimaryActionCard activeOpacity={0.9} onPress={() => navigation.navigate('Requests')}>
+              <LinearGradient colors={['#1e293b', '#334155']} style={CardStyle}>
+                <IconCircle><Map color="#1e293b" size={24} /></IconCircle>
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <ActionTitle>View Assigned Routes</ActionTitle>
+                  <ActionSub>Check today's collection points</ActionSub>
+                </View>
+                <ArrowRight color="#fff" size={20} />
+              </LinearGradient>
+            </PrimaryActionCard>
+
+            <SecondaryActionCard activeOpacity={0.8} onPress={() => navigation.navigate('NewReport')}>
+              <LinearGradient colors={['#991b1b', '#7f1d1d']} style={CardStyle}>
+                <IconCircle><AlertTriangle color="#991b1b" size={24} /></IconCircle>
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <ActionTitle>Report Incident</ActionTitle>
+                  <ActionSub>Road block or illegal dumping</ActionSub>
+                </View>
+                <ArrowRight color="#fff" size={20} />
+              </LinearGradient>
+            </SecondaryActionCard>
+          </View>
+        ) : (
+          <View>
+            <PrimaryActionCard activeOpacity={0.9} onPress={() => navigation.navigate('NewRequest')}>
+              <LinearGradient colors={['#15803d', '#166534']} style={CardStyle}>
+                <IconCircle><Trash2 color="#15803d" size={24} /></IconCircle>
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <ActionTitle>Request Waste Pickup</ActionTitle>
+                  <ActionSub>Instant scheduled collection</ActionSub>
+                </View>
+                <ArrowRight color="#fff" size={20} />
+              </LinearGradient>
+            </PrimaryActionCard>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+                <SmallCard onPress={() => navigation.navigate('Requests')}>
+                    <Clock color="#15803d" size={20} />
+                    <SmallActionLabel>View History</SmallActionLabel>
+                </SmallCard>
+                <SmallCard onPress={() => navigation.navigate('Reports')}>
+                    <MessageSquare color="#15803d" size={20} />
+                    <SmallActionLabel>My Reports</SmallActionLabel>
+                </SmallCard>
             </View>
-            <ArrowRight color="#fff" size={20} />
-          </LinearGradient>
-        </PrimaryActionCard>
+          </View>
+        )}
 
-        <SectionHeader>
+        {/* 4. RECENT ACTIVITY PREVIEW */}
+        <SectionHeader style={{ marginTop: 25 }}>
           <SectionTitle>Recent Activity</SectionTitle>
-          <SeeAll>See All</SeeAll>
+          <SeeAll onPress={() => navigation.navigate('Requests')}>See All</SeeAll>
         </SectionHeader>
 
         <ActivityCard>
-          <StatusIndicator status="completed" />
+          <StatusIndicator color="#15803d" />
           <ActivityInfo>
-            <ActivityTitle>Plastic & Paper Collection</ActivityTitle>
-            <ActivityDate>Yesterday, 10:30 AM</ActivityDate>
+            <ActivityTitle>System Status</ActivityTitle>
+            <ActivityDate>Cloud Backend Connected Successfully</ActivityDate>
           </ActivityInfo>
-          <StatusText color="#16a34a">Completed</StatusText>
-        </ActivityCard>
-
-        <ActivityCard>
-          <StatusIndicator status="pending" />
-          <ActivityInfo>
-            <ActivityTitle>Organic Waste Pickup</ActivityTitle>
-            <ActivityDate>Scheduled: Friday, 08:00 AM</ActivityDate>
-          </ActivityInfo>
-          <StatusText color="#ca8a04">Pending</StatusText>
+          <CheckCircle color="#15803d" size={20} />
         </ActivityCard>
       </Content>
     </Container>
   );
 };
 
+const CardStyle = { padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center' };
+
+// --- STYLED COMPONENTS ---
 const Container = styled.View` flex: 1; background-color: #f8fafc; `;
 const HeaderWrapper = styled(LinearGradient)` padding: 60px 20px 45px; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; `;
 const TopRow = styled.View` flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 30px; `;
@@ -106,24 +136,26 @@ const AvatarWrapper = styled.View` width: 40px; height: 40px; border-radius: 20p
 const WelcomeText = styled.Text` color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 500; `;
 const UserName = styled.Text` color: #fff; font-size: 20px; font-weight: bold; `;
 const IconButton = styled.TouchableOpacity` background: rgba(255,255,255,0.15); padding: 10px; border-radius: 12px; `;
-const StatsContainer = styled.View` flex-direction: row; background: #fff; border-radius: 20px; padding: 20px; justify-content: space-around; elevation: 10; shadow-color: #000; shadow-opacity: 0.1; shadow-radius: 10px; `;
+const StatsContainer = styled.View` flex-direction: row; background: #fff; border-radius: 20px; padding: 20px; justify-content: space-around; elevation: 10; shadow-opacity: 0.1; shadow-radius: 10px; `;
 const StatBox = styled.View` align-items: center; `;
 const StatNum = styled.Text` font-size: 18px; font-weight: bold; color: #0f172a; `;
 const StatLabel = styled.Text` font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500; `;
 const Divider = styled.View` width: 1px; height: 30px; background: #e2e8f0; align-self: center; `;
 const Content = styled.ScrollView` flex: 1; padding: 25px 20px; `;
 const SectionHeader = styled.View` flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 15px; `;
-const SectionTitle = styled.Text` font-size: 18px; font-weight: 700; color: #0f172a; `;
-const SeeAll = styled.Text` color: #15803d; font-weight: 600; font-size: 13px; `;
-const PrimaryActionCard = styled.TouchableOpacity` margin-bottom: 25px; border-radius: 20px; `;
+const SectionTitle = styled.Text` font-size: 18px; font-weight: 800; color: #0f172a; `;
+const SeeAll = styled.Text` color: #15803d; font-weight: 700; font-size: 13px; `;
+const PrimaryActionCard = styled.TouchableOpacity` margin-bottom: 15px; `;
+const SecondaryActionCard = styled.TouchableOpacity` margin-bottom: 15px; `;
+const SmallCard = styled.TouchableOpacity` flex: 1; background: #fff; padding: 15px; border-radius: 15px; border: 1px solid #e2e8f0; flex-direction: row; align-items: center; justify-content: center; gap: 8px; `;
+const SmallActionLabel = styled.Text` font-weight: 700; color: #1e293b; font-size: 12px; `;
 const IconCircle = styled.View` width: 48px; height: 48px; border-radius: 24px; background: #fff; justify-content: center; align-items: center; `;
 const ActionTitle = styled.Text` color: #fff; font-size: 17px; font-weight: 700; `;
 const ActionSub = styled.Text` color: rgba(255,255,255,0.8); font-size: 12px; `;
 const ActivityCard = styled.View` background: #fff; border-radius: 16px; padding: 16px; flex-direction: row; align-items: center; margin-bottom: 12px; border: 1px solid #f1f5f9; `;
-const StatusIndicator = styled.View` width: 4px; height: 35px; border-radius: 2px; background: ${props => props.status === 'completed' ? '#16a34a' : '#ca8a04'}; margin-right: 15px; `;
+const StatusIndicator = styled.View` width: 4px; height: 35px; border-radius: 2px; background: ${props => props.color}; margin-right: 15px; `;
 const ActivityInfo = styled.View` flex: 1; `;
 const ActivityTitle = styled.Text` font-size: 15px; font-weight: 600; color: #1e293b; `;
 const ActivityDate = styled.Text` font-size: 12px; color: #94a3b8; margin-top: 2px; `;
-const StatusText = styled.Text` font-size: 12px; font-weight: 700; color: ${props => props.color}; `;
 
 export default HomeScreen;
