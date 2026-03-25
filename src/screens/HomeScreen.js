@@ -1,48 +1,39 @@
 import React, { useContext, useState, useCallback } from 'react';
-import { ScrollView, StatusBar, View, ActivityIndicator, Dimensions } from 'react-native';
+import { ScrollView, StatusBar, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-import { BarChart } from "react-native-chart-kit"; // Chart Import
 import { AuthContext } from '../context/AuthContext';
 import apiClient from '../api/client';
 import { 
   Bell, Trash2, ArrowRight, User as UserIcon, 
-  Map, Clock, MessageSquare, CheckCircle 
+  AlertTriangle, Map, Clock, MessageSquare, CheckCircle 
 } from 'lucide-react-native';
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({ summary: { total: 0 }, wasteTypeStats: [] });
   const [loading, setLoading] = useState(true);
   const isCollector = user?.role === 'collector';
 
-  const fetchData = async () => {
+  const fetchDashboardData = async () => {
     try {
-      // Fetch both Notifications and Analytics in parallel
       const [notifyRes, statsRes] = await Promise.all([
         apiClient.get('/notifications'),
         apiClient.get('/analytics/stats')
       ]);
-      
       setUnreadCount(notifyRes.data.data.filter(n => !n.read).length);
       setStats(statsRes.data);
     } catch (e) {
-      console.log('Error fetching dashboard data');
+      console.log('Stats Load Error');
     } finally {
       setLoading(false);
     }
   };
 
-  useFocusEffect(useCallback(() => { fetchData(); }, []));
-
-  // Data formatting for the Chart
-  const chartData = {
-    labels: stats?.wasteTypeStats?.map(s => s._id.charAt(0).toUpperCase() + s._id.slice(1)) || ["None"],
-    datasets: [{ data: stats?.wasteTypeStats?.map(s => s.count) || [0] }]
-  };
+  useFocusEffect(useCallback(() => { fetchDashboardData(); }, []));
 
   if (loading) return <Centered><ActivityIndicator size="large" color="#15803d" /></Centered>;
 
@@ -67,82 +58,73 @@ const HomeScreen = ({ navigation }) => {
 
         <StatsContainer>
           <StatBox>
-            <StatNum>{stats?.summary?.total || 0}</StatNum>
-            <StatLabel>Total Pickups</StatLabel>
+            <StatNum>{stats.summary.total}</StatNum>
+            <StatLabel>Pickups</StatLabel>
           </StatBox>
           <Divider />
           <StatBox>
-            <StatNum>{isCollector ? '98%' : '4.8'}</StatNum>
+            <StatNum>{isCollector ? '98%' : '4.9'}</StatNum>
             <StatLabel>{isCollector ? 'Efficiency' : 'Rating'}</StatLabel>
           </StatBox>
           <Divider />
           <StatBox>
-            <StatNum>{stats?.wasteTypeStats?.length || 0}</StatNum>
+            <StatNum>{stats.wasteTypeStats.length}</StatNum>
             <StatLabel>Categories</StatLabel>
           </StatBox>
         </StatsContainer>
       </HeaderWrapper>
 
       <Content showsVerticalScrollIndicator={false}>
-        <SectionHeader><SectionTitle>Operations</SectionTitle></SectionHeader>
+        <SectionHeader><SectionTitle>Primary Operations</SectionTitle></SectionHeader>
 
         {isCollector ? (
-          <PrimaryActionCard activeOpacity={0.9} onPress={() => navigation.navigate('Requests')}>
-            <LinearGradient colors={['#1e293b', '#334155']} style={CardStyle}>
-              <IconCircle><Map color="#1e293b" size={24} /></IconCircle>
-              <View style={{ flex: 1, marginLeft: 15 }}>
-                <ActionTitle>Daily Route</ActionTitle>
-                <ActionSub>Navigate to assigned points</ActionSub>
-              </View>
-              <ArrowRight color="#fff" size={20} />
-            </LinearGradient>
-          </PrimaryActionCard>
+          <View>
+            <PrimaryActionCard activeOpacity={0.9} onPress={() => navigation.navigate('Map')}>
+              <LinearGradient colors={['#1e293b', '#334155']} style={CardStyle}>
+                <IconCircle><Map color="#1e293b" size={24} /></IconCircle>
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <ActionTitle>Live Mission Map</ActionTitle>
+                  <ActionSub>Navigate to collection pins</ActionSub>
+                </View>
+                <ArrowRight color="#fff" size={20} />
+              </LinearGradient>
+            </PrimaryActionCard>
+            <SecondaryActionCard activeOpacity={0.8} onPress={() => navigation.navigate('NewReport')}>
+              <LinearGradient colors={['#991b1b', '#7f1d1d']} style={CardStyle}>
+                <IconCircle><AlertTriangle color="#991b1b" size={24} /></IconCircle>
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <ActionTitle>Report Incident</ActionTitle>
+                  <ActionSub>Illegal dumping or blocks</ActionSub>
+                </View>
+                <ArrowRight color="#fff" size={20} />
+              </LinearGradient>
+            </SecondaryActionCard>
+          </View>
         ) : (
-          <PrimaryActionCard activeOpacity={0.9} onPress={() => navigation.navigate('NewRequest')}>
-            <LinearGradient colors={['#15803d', '#166534']} style={CardStyle}>
-              <IconCircle><Trash2 color="#15803d" size={24} /></IconCircle>
-              <View style={{ flex: 1, marginLeft: 15 }}>
-                <ActionTitle>Request Pickup</ActionTitle>
-                <ActionSub>Instant scheduled collection</ActionSub>
-              </View>
-              <ArrowRight color="#fff" size={20} />
-            </LinearGradient>
-          </PrimaryActionCard>
+          <View>
+            <PrimaryActionCard activeOpacity={0.9} onPress={() => navigation.navigate('NewRequest')}>
+              <LinearGradient colors={['#15803d', '#166534']} style={CardStyle}>
+                <IconCircle><Trash2 color="#15803d" size={24} /></IconCircle>
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <ActionTitle>Request Waste Pickup</ActionTitle>
+                  <ActionSub>Instant scheduled collection</ActionSub>
+                </View>
+                <ArrowRight color="#fff" size={20} />
+              </LinearGradient>
+            </PrimaryActionCard>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+                <SmallCard onPress={() => navigation.navigate('Requests')}><Clock color="#15803d" size={20} /><SmallLabel>History</SmallLabel></SmallCard>
+                <SmallCard onPress={() => navigation.navigate('Reports')}><MessageSquare color="#15803d" size={20} /><SmallLabel>Reports</SmallLabel></SmallCard>
+            </View>
+          </View>
         )}
 
-        {/* CHART SECTION */}
-        <SectionHeader><SectionTitle>Waste Distribution</SectionTitle></SectionHeader>
-        <ChartWrapper>
-          <BarChart
-            data={chartData}
-            width={Dimensions.get("window").width - 40}
-            height={220}
-            yAxisLabel=""
-            chartConfig={{
-              backgroundColor: "#ffffff",
-              backgroundGradientFrom: "#ffffff",
-              backgroundGradientTo: "#ffffff",
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(21, 128, 61, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
-              style: { borderRadius: 16 },
-              propsForDots: { r: "6", strokeWidth: "2", stroke: "#ffa726" }
-            }}
-            verticalLabelRotation={0}
-            style={{ marginVertical: 8, borderRadius: 16 }}
-          />
-        </ChartWrapper>
-
-        <SectionHeader style={{ marginTop: 20 }}>
-          <SectionTitle>Recent Activity</SectionTitle>
-          <SeeAll onPress={() => navigation.navigate('Requests')}>See All</SeeAll>
-        </SectionHeader>
-
+        <SectionHeader style={{ marginTop: 25 }}><SectionTitle>Recent Activity</SectionTitle></SectionHeader>
         <ActivityCard>
           <StatusIndicator color="#15803d" />
           <ActivityInfo>
-            <ActivityTitle>Cloud Sync</ActivityTitle>
-            <ActivityDate>Real-time data active</ActivityDate>
+            <ActivityTitle>Cloud Sync Active</ActivityTitle>
+            <ActivityDate>Last updated: Just now</ActivityDate>
           </ActivityInfo>
           <CheckCircle color="#15803d" size={20} />
         </ActivityCard>
@@ -168,14 +150,15 @@ const StatNum = styled.Text` font-size: 18px; font-weight: bold; color: #0f172a;
 const StatLabel = styled.Text` font-size: 11px; color: #64748b; margin-top: 4px; `;
 const Divider = styled.View` width: 1px; height: 30px; background: #e2e8f0; align-self: center; `;
 const Content = styled.ScrollView` flex: 1; padding: 25px 20px; `;
-const SectionHeader = styled.View` flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 15px; `;
+const SectionHeader = styled.View` margin-bottom: 15px; `;
 const SectionTitle = styled.Text` font-size: 18px; font-weight: 800; color: #0f172a; `;
-const SeeAll = styled.Text` color: #15803d; font-weight: 700; font-size: 13px; `;
 const PrimaryActionCard = styled.TouchableOpacity` margin-bottom: 15px; `;
+const SecondaryActionCard = styled.TouchableOpacity` margin-bottom: 15px; `;
+const SmallCard = styled.TouchableOpacity` flex: 1; background: #fff; padding: 15px; border-radius: 15px; border: 1px solid #e2e8f0; flex-direction: row; align-items: center; justify-content: center; gap: 8px; `;
+const SmallLabel = styled.Text` font-weight: 700; color: #1e293b; font-size: 12px; `;
 const IconCircle = styled.View` width: 48px; height: 48px; border-radius: 24px; background: #fff; justify-content: center; align-items: center; `;
 const ActionTitle = styled.Text` color: #fff; font-size: 17px; font-weight: 700; `;
 const ActionSub = styled.Text` color: rgba(255,255,255,0.8); font-size: 12px; `;
-const ChartWrapper = styled.View` background: #fff; border-radius: 20px; padding: 10px; border: 1px solid #f1f5f9; elevation: 2; `;
 const ActivityCard = styled.View` background: #fff; border-radius: 16px; padding: 16px; flex-direction: row; align-items: center; margin-bottom: 12px; border: 1px solid #f1f5f9; `;
 const StatusIndicator = styled.View` width: 4px; height: 35px; border-radius: 2px; background: #15803d; margin-right: 15px; `;
 const ActivityInfo = styled.View` flex: 1; `;
