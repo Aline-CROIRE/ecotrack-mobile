@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
+import { FlatList, RefreshControl, ActivityIndicator, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Bell, Info, CheckCircle, Trash2, ChevronLeft } from 'lucide-react-native';
+import { Bell, ChevronLeft, CheckCircle } from 'lucide-react-native';
 import apiClient from '../api/client';
 
 const NotificationScreen = ({ navigation }) => {
@@ -23,10 +23,26 @@ const NotificationScreen = ({ navigation }) => {
     }
   };
 
+  const markAsRead = async (id) => {
+    try {
+      await apiClient.put(`/notifications/${id}/read`);
+      // Update local UI immediately
+      setNotifications(prev => 
+        prev.map(item => item._id === id ? { ...item, read: true } : item)
+      );
+    } catch (e) {
+      console.log('Error marking as read');
+    }
+  };
+
   useFocusEffect(useCallback(() => { fetchNotifications(); }, []));
 
   const renderItem = ({ item }) => (
-    <NotifyCard read={item.read}>
+    <NotifyCard 
+      read={item.read} 
+      activeOpacity={0.7} 
+      onPress={() => markAsRead(item._id)}
+    >
       <IconBox bg={item.read ? '#f8fafc' : '#f0fdf4'}>
         <Bell color={item.read ? '#94a3b8' : '#15803d'} size={20} />
       </IconBox>
@@ -61,7 +77,7 @@ const NotificationScreen = ({ navigation }) => {
           ListEmptyComponent={
             <EmptyContainer>
               <Bell size={48} color="#cbd5e1" />
-              <EmptyText>All caught up!</EmptyText>
+              <EmptyText>No notifications yet</EmptyText>
             </EmptyContainer>
           }
         />
@@ -76,7 +92,7 @@ const Header = styled.View` flex-direction: row; justify-content: space-between;
 const BackButton = styled.TouchableOpacity``;
 const HeaderTitle = styled.Text` font-size: 18px; font-weight: 800; color: #0f172a; `;
 const Centered = styled.View` flex: 1; justify-content: center; align-items: center; `;
-const NotifyCard = styled.View` flex-direction: row; padding: 16px; background: ${props => props.read ? '#fff' : '#f0fdf4'}; border-radius: 15px; margin-bottom: 12px; border: 1px solid #f1f5f9; align-items: center; `;
+const NotifyCard = styled.TouchableOpacity` flex-direction: row; padding: 16px; background: ${props => props.read ? '#fff' : '#f0fdf4'}; border-radius: 15px; margin-bottom: 12px; border: 1px solid #f1f5f9; align-items: center; `;
 const IconBox = styled.View` width: 45px; height: 45px; border-radius: 12px; background: ${props => props.bg}; justify-content: center; align-items: center; margin-right: 15px; `;
 const NotifyContent = styled.View` flex: 1; `;
 const NotifyTitle = styled.Text` font-size: 15px; font-weight: 800; color: ${props => props.read ? '#64748b' : '#0f172a'}; `;
