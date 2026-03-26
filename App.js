@@ -2,58 +2,52 @@ import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ThemeProvider } from 'styled-components/native';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-// Global Context & Theme
 import { theme } from './src/theme/theme';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 
-// Navigation Hub (Bottom Tabs)
 import TabNavigator from './src/navigation/TabNavigator';
-
-// Auth Stack Screens
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-
-// App Stack Screens (Full Screen)
 import RequestDetailScreen from './src/screens/RequestDetailScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
-
-// Modal Screens (Slide up from bottom)
+import ChatListScreen from './src/screens/ChatListScreen';
+import ChatRoomScreen from './src/screens/ChatRoomScreen';
 import NewRequestScreen from './src/screens/NewRequestScreen';
 import NewReportScreen from './src/screens/NewReportScreen';
+import ReportDetailScreen from './src/screens/ReportDetailScreen';
+import CollectorPerformanceScreen from './src/screens/CollectorPerformanceScreen';
+import AdminUserListScreen from './src/screens/AdminUserListScreen';
+import MapScreen from './src/screens/MapScreen'; // Used for both Collector and AdminMap
 
 const Stack = createStackNavigator();
 
-/**
- * RootNavigator: Switches between Auth and App based on token
- */
 const RootNavigator = () => {
   const { token, isLoading } = useContext(AuthContext);
-
-  if (isLoading) return null; // Or a Splash Screen component
+  if (isLoading) return null; 
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {token ? (
-        // --- AUTHENTICATED APP STACK ---
         <>
-          {/* Main Tab Navigation */}
           <Stack.Screen name="Main" component={TabNavigator} />
           
-          {/* Feature Screens */}
+          {/* NAVIGATION FIXES */}
+          <Stack.Screen name="AdminMap" component={MapScreen} /> 
+          <Stack.Screen name="ReportDetail" component={ReportDetailScreen} />
+          
           <Stack.Screen name="RequestDetail" component={RequestDetailScreen} />
+          <Stack.Screen name="ChatList" component={ChatListScreen} />
+          <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
           <Stack.Screen name="Notifications" component={NotificationScreen} />
+          <Stack.Screen name="CollectorPerformance" component={CollectorPerformanceScreen} />
+          <Stack.Screen name="AdminUserList" component={AdminUserListScreen} />
 
-          {/* Form Modals */}
           <Stack.Group screenOptions={{ presentation: 'modal' }}>
             <Stack.Screen name="NewRequest" component={NewRequestScreen} />
             <Stack.Screen name="NewReport" component={NewReportScreen} />
           </Stack.Group>
         </>
       ) : (
-        // --- UNAUTHENTICATED AUTH STACK ---
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
@@ -65,15 +59,6 @@ const RootNavigator = () => {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider theme={theme}>
-        <AuthProvider>
-          <NavigationContainer>
-            <StatusBar style="auto" />
-            <RootNavigator />
-          </NavigationContainer>
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ThemeProvider theme={theme}><AuthProvider><NavigationContainer><RootNavigator /></NavigationContainer></AuthProvider></ThemeProvider>
   );
 }
