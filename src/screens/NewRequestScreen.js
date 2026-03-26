@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
-import { ScrollView, Alert, ActivityIndicator, Image, View } from 'react-native';
+import { 
+  ScrollView, Alert, ActivityIndicator, Image, 
+  View, TouchableOpacity, StatusBar 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
-import { Camera, Calendar, MapPin, X, Navigation, Edit3 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { 
+  Camera, Calendar, MapPin, X, Navigation, 
+  Edit3, Leaf, Milk, FileText, Cpu, HelpCircle, CheckCircle2
+} from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -23,46 +30,32 @@ const NewRequestScreen = ({ navigation }) => {
     scheduledDate: new Date(),
   });
 
+  const categories = [
+    { id: 'plastic', label: 'Plastic', icon: Milk },
+    { id: 'organic', label: 'Organic', icon: Leaf },
+    { id: 'paper', label: 'Paper', icon: FileText },
+    { id: 'electronic', label: 'E-Waste', icon: Cpu },
+    { id: 'other', label: 'Other', icon: HelpCircle },
+  ];
+
   const getCurrentLocation = async () => {
     setLocLoading(true);
     try {
-      // 1. Request Permission explicitly
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setLocLoading(false);
-        return Alert.alert('Permission Denied', 'Please allow location access in your phone settings.');
+        return Alert.alert('Access Denied', 'GPS is required to drop a mission pin.');
       }
 
-      // 2. Try to get Last Known Position (This is instant and works indoors)
-      const lastKnown = await Location.getLastKnownPositionAsync({});
-      if (lastKnown) {
-        setForm(prev => ({
-          ...prev,
-          latitude: lastKnown.coords.latitude,
-          longitude: lastKnown.coords.longitude,
-          address: `GPS: ${lastKnown.coords.latitude.toFixed(4)}, ${lastKnown.coords.longitude.toFixed(4)}`
-        }));
-      }
-
-      // 3. Try to get fresh location with 'Balanced' accuracy (faster than satellite)
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced, // Uses WiFi/Cell instead of just satellite
-        timeout: 10000, // Wait max 10 seconds
-      });
-
+      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       setForm(prev => ({
         ...prev,
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-        address: `GPS Pin: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`
+        address: `Pinned: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`
       }));
-
     } catch (error) {
-      console.log("Location Error:", error.message);
-      // If fresh location fails but we have lastKnown, we don't alert.
-      if (!form.latitude) {
-        Alert.alert('Location Error', 'Unable to get GPS. Try moving near a window or check if Location/Wi-Fi is ON.');
-      }
+      Alert.alert('GPS Error', 'Satellites unreachable. Check if Location is ON.');
     } finally {
       setLocLoading(false);
     }
@@ -78,8 +71,8 @@ const NewRequestScreen = ({ navigation }) => {
   };
 
   const handleSubmit = async () => {
-    if (!form.latitude) return Alert.alert('Error', 'Please capture your location first.');
-    if (!form.address) return Alert.alert('Error', 'Please add a small address description.');
+    if (!form.latitude) return Alert.alert('GPS Required', 'Please capture your exact location.');
+    if (!form.address) return Alert.alert('Missing Detail', 'Please provide a landmark or address.');
     
     setLoading(true);
     const formData = new FormData();
@@ -101,9 +94,9 @@ const NewRequestScreen = ({ navigation }) => {
       await apiClient.post('/requests', formData, { 
         headers: { 'Content-Type': 'multipart/form-data' } 
       });
-      Alert.alert('Success', 'Pickup Point Pinned!', [{ text: 'OK', onPress: () => navigation.navigate('Main') }]);
+      Alert.alert('Mission Active', 'Pickup request successfully deployed.', [{ text: 'OK', onPress: () => navigation.navigate('Main') }]);
     } catch (e) {
-      Alert.alert('Error', 'Failed to send request. Check your internet.');
+      Alert.alert('Server Error', 'Failed to initiate mission. Try again.');
     } finally {
       setLoading(false);
     }
@@ -111,49 +104,69 @@ const NewRequestScreen = ({ navigation }) => {
 
   return (
     <Container>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#ffffff' }} />
+
       <Header>
-        <TouchableOpacityStyled onPress={() => navigation.goBack()}><X color="#0f172a" size={24} /></TouchableOpacityStyled>
-        <HeaderText>New Pickup Request</HeaderText>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={() => navigation.goBack()}><X color="#0f172a" size={28} /></TouchableOpacity>
+        <HeaderTitle>Initiate Mission</HeaderTitle>
+        <View style={{ width: 28 }} />
       </Header>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 25 }}>
         
-        <SectionLabel>1. Waste Category</SectionLabel>
-        <ChipsContainer>
-          {['plastic', 'organic', 'metal', 'electronic', 'other'].map((t) => (
-            <Chip key={t} active={form.wasteType === t} onPress={() => setForm({...form, wasteType: t})}>
-              <ChipText active={form.wasteType === t}>{t}</ChipText>
-            </Chip>
-          ))}
-        </ChipsContainer>
+        {/* STEP 1: CATEGORY */}
+        <StepHeader><StepNum>01</StepNum><StepLabel>SELECT WASTE CATEGORY</StepLabel></StepHeader>
+        <CategoryGrid>
+            {categories.map((cat) => (
+                <CategoryCard 
+                    key={cat.id} 
+                    active={form.wasteType === cat.id}
+                    onPress={() => setForm({...form, wasteType: cat.id})}
+                >
+                    <cat.icon size={24} color={form.wasteType === cat.id ? '#15803d' : '#94a3b8'} />
+                    <CatLabel active={form.wasteType === cat.id}>{cat.label}</CatLabel>
+                </CategoryCard>
+            ))}
+        </CategoryGrid>
 
-        <SectionLabel>2. Location (GPS Required)</SectionLabel>
-        <GPSButton onPress={getCurrentLocation} activeOpacity={0.8} hasCoords={!!form.latitude}>
-          {locLoading ? <ActivityIndicator color="#fff" /> : (
-            <>
-              <Navigation color="#fff" size={20} />
-              <GPSButtonText>
-                {form.latitude ? "GPS Point Captured ✓" : "Capture My Location"}
-              </GPSButtonText>
-            </>
-          )}
-        </GPSButton>
+        {/* STEP 2: LOCATION */}
+        <StepHeader><StepNum>02</StepNum><StepLabel>DEPLOY GPS PIN</StepLabel></StepHeader>
+        <GPSAction onPress={getCurrentLocation} activeOpacity={0.8} hasCoords={!!form.latitude}>
+            {locLoading ? <ActivityIndicator color="#fff" /> : (
+                <>
+                    <Navigation color="#fff" size={20} />
+                    <GPSText>{form.latitude ? "LOCATION CAPTURED" : "CAPTURE MY POSITION"}</GPSText>
+                    {form.latitude && <CheckCircle2 color="#fff" size={18} />}
+                </>
+            )}
+        </GPSAction>
 
-        <InputWrapper>
-          <Edit3 color="#64748b" size={18} />
-          <StyledInput 
-            placeholder="Add landmark (e.g. Near gate)" 
-            value={form.address}
-            onChangeText={(text) => setForm({...form, address: text})}
-          />
-        </InputWrapper>
+        <InputBox>
+            <Edit3 color="#cbd5e1" size={18} />
+            <StyledInput 
+                placeholder="Landmark (e.g. Near main gate)" 
+                placeholderTextColor="#94a3b8"
+                value={form.address}
+                onChangeText={(text) => setForm({...form, address: text})}
+            />
+        </InputBox>
 
-        <SectionLabel>3. Date & Evidence</SectionLabel>
-        <InputGroup onPress={() => setShowDatePicker(true)}>
-          <Calendar color="#15803d" size={20} />
-          <DateDisplay>{form.scheduledDate.toDateString()}</DateDisplay>
-        </InputGroup>
+        {/* STEP 3: LOGISTICS */}
+        <StepHeader><StepNum>03</StepNum><StepLabel>DATE & EVIDENCE</StepLabel></StepHeader>
+        <LogisticsRow>
+            <MiniAction onPress={() => setShowDatePicker(true)}>
+                <Calendar color="#15803d" size={18} />
+                <MiniLabel>{form.scheduledDate.toLocaleDateString()}</MiniLabel>
+            </MiniAction>
+
+            <MiniAction onPress={pickImage}>
+                <Camera color="#15803d" size={18} />
+                <MiniLabel>{image ? "IMAGE ATTACHED" : "ADD PHOTO"}</MiniLabel>
+            </MiniAction>
+        </LogisticsRow>
+
+        {image && <ImagePreview source={{ uri: image }} />}
 
         {showDatePicker && (
           <DateTimePicker value={form.scheduledDate} mode="date" display="default"
@@ -161,37 +174,48 @@ const NewRequestScreen = ({ navigation }) => {
           />
         )}
 
-        <PhotoUpload onPress={pickImage}>
-          {image ? <PreviewImage source={{ uri: image }} /> : <View style={{alignItems:'center'}}><Camera color="#15803d" size={32} /><UploadText>Add Photo</UploadText></View>}
-        </PhotoUpload>
+        {/* SUBMIT MISSION */}
+        <SubmitArea>
+            <TouchableOpacity onPress={handleSubmit} disabled={loading || locLoading}>
+                <LinearGradient 
+                    colors={['#064e3b', '#15803d']} 
+                    style={{ padding: 20, borderRadius: 20, alignItems: 'center', elevation: 8, shadowOpacity: 0.3, shadowRadius: 10 }}
+                >
+                    {loading ? <ActivityIndicator color="#fff" /> : <SubmitText>START COLLECTION MISSION</SubmitText>}
+                </LinearGradient>
+            </TouchableOpacity>
+        </SubmitArea>
 
-        <SubmitButton onPress={handleSubmit} disabled={loading || locLoading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <SubmitText>Confirm Request</SubmitText>}
-        </SubmitButton>
       </ScrollView>
     </Container>
   );
 };
 
-// --- STYLED COMPONENTS ---
-const Container = styled(SafeAreaView)` flex: 1; background: #fff; `;
-const Header = styled.View` flex-direction: row; justify-content: space-between; padding: 15px 20px; border-bottom-width: 1px; border-bottom-color: #f1f5f9; `;
-const TouchableOpacityStyled = styled.TouchableOpacity``;
-const HeaderText = styled.Text` font-size: 18px; font-weight: 800; color: #0f172a; `;
-const SectionLabel = styled.Text` font-size: 14px; font-weight: 800; color: #64748b; margin-top: 25px; margin-bottom: 12px; `;
-const ChipsContainer = styled.View` flex-direction: row; flex-wrap: wrap; gap: 10px; `;
-const Chip = styled.TouchableOpacity` padding: 12px 16px; border-radius: 12px; background: ${props => props.active ? '#15803d' : '#f8fafc'}; border: 1px solid ${props => props.active ? '#15803d' : '#e2e8f0'}; `;
-const ChipText = styled.Text` text-transform: capitalize; color: ${props => props.active ? '#fff' : '#64748b'}; font-weight: 700; `;
-const GPSButton = styled.TouchableOpacity` background: ${props => props.hasCoords ? '#16a34a' : '#0f172a'}; padding: 18px; border-radius: 15px; flex-direction: row; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; `;
-const GPSButtonText = styled.Text` color: #fff; font-weight: 800; `;
-const InputWrapper = styled.View` flex-direction: row; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 15px; border-radius: 12px; `;
-const StyledInput = styled.TextInput` flex: 1; margin-left: 10px; font-size: 15px; color: #0f172a; `;
-const InputGroup = styled.TouchableOpacity` flex-direction: row; align-items: center; background: #f8fafc; padding: 16px; border-radius: 15px; border: 1px solid #e2e8f0; margin-top: 10px; `;
-const DateDisplay = styled.Text` margin-left: 10px; font-size: 16px; color: #0f172a; `;
-const PhotoUpload = styled.TouchableOpacity` height: 160px; background: #f0fdf4; border-radius: 20px; border: 2px dashed #15803d; overflow: hidden; margin-top: 20px; justify-content: center; align-items: center; `;
-const PreviewImage = styled.Image` width: 100%; height: 100%; `;
-const UploadText = styled.Text` color: #15803d; font-weight: 700; margin-top: 8px; `;
-const SubmitButton = styled.TouchableOpacity` background: #15803d; padding: 20px; border-radius: 18px; align-items: center; margin-top: 30px; margin-bottom: 40px; `;
-const SubmitText = styled.Text` color: #fff; font-size: 18px; font-weight: 800; `;
+// --- PREMIUM STYLED COMPONENTS ---
+const Container = styled.View` flex: 1; background: #fff; `;
+const Header = styled.View` flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px 20px; border-bottom-width: 1px; border-bottom-color: #f1f5f9; `;
+const HeaderTitle = styled.Text` font-size: 18px; font-weight: 900; color: #0f172a; `;
+
+const StepHeader = styled.View` flex-direction: row; align-items: center; margin-top: 30px; margin-bottom: 15px; gap: 10px; `;
+const StepNum = styled.Text` font-size: 24px; font-weight: 900; color: #f1f5f9; position: absolute; left: -5px; top: -10px; `;
+const StepLabel = styled.Text` font-size: 11px; font-weight: 800; color: #cbd5e1; letter-spacing: 1.5px; margin-left: 20px; `;
+
+const CategoryGrid = styled.View` flex-direction: row; flex-wrap: wrap; gap: 10px; `;
+const CategoryCard = styled.TouchableOpacity` width: 31%; aspect-ratio: 1; background: ${props => props.active ? '#f0fdf4' : '#f8fafc'}; border-radius: 20px; border: 2px solid ${props => props.active ? '#15803d' : '#f1f5f9'}; justify-content: center; align-items: center; `;
+const CatLabel = styled.Text` font-size: 10px; font-weight: 800; margin-top: 8px; color: ${props => props.active ? '#15803d' : '#94a3b8'}; `;
+
+const GPSAction = styled.TouchableOpacity` background: ${props => props.hasCoords ? '#16a34a' : '#0f172a'}; padding: 18px; border-radius: 20px; flex-direction: row; justify-content: center; align-items: center; gap: 12px; margin-bottom: 15px; elevation: 4; `;
+const GPSText = styled.Text` color: #fff; font-weight: 900; font-size: 12px; letter-spacing: 0.5px; `;
+
+const InputBox = styled.View` flex-direction: row; align-items: center; background: #f8fafc; border-radius: 15px; border: 1px solid #e2e8f0; padding: 14px 15px; `;
+const StyledInput = styled.TextInput` flex: 1; margin-left: 10px; font-size: 15px; font-weight: 700; color: #0f172a; `;
+
+const LogisticsRow = styled.View` flex-direction: row; gap: 12px; margin-top: 5px; `;
+const MiniAction = styled.TouchableOpacity` flex: 1; background: #f0fdf4; border: 1px solid #dcfce7; padding: 15px; border-radius: 15px; flex-direction: row; align-items: center; gap: 10px; `;
+const MiniLabel = styled.Text` font-size: 11px; font-weight: 800; color: #15803d; `;
+
+const ImagePreview = styled.Image` width: 100%; height: 180px; border-radius: 20px; margin-top: 20px; background: #f8fafc; `;
+const SubmitArea = styled.View` margin-top: 40px; margin-bottom: 50px; `;
+const SubmitText = styled.Text` color: #fff; font-size: 14px; font-weight: 900; letter-spacing: 1px; `;
 
 export default NewRequestScreen;
