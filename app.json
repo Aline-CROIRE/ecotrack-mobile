@@ -1,33 +1,37 @@
 {
   "expo": {
     "name": "ecotrack-mobile",
-    "slug": "ecotrack-mobile",
+    "slug": "ecotrack",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "updates": {
       "enabled": false,
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/c698e1a9-1ef2-4c91-9223-5bf8d7072055"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ecotrack.mobile"
+      "bundleIdentifier": "com.ecotrack.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/logo.png",
+        "backgroundImage": "./assets/logo.png",
+        "monochromeImage": "./assets/logo.png"
       },
       "package": "com.ecotrack.mobile"
     },
@@ -37,7 +41,17 @@
     "plugins": [
       "expo-secure-store",
       "expo-asset",
-      "@react-native-community/datetimepicker"
-    ]
+      "@react-native-community/datetimepicker",
+      "expo-localization"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c698e1a9-1ef2-4c91-9223-5bf8d7072055"
+      }
+    },
+    "owner": "kim12",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
